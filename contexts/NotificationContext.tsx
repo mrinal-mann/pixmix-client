@@ -11,6 +11,7 @@ import { Platform } from "react-native";
 import { registerFCMToken } from "../services/notificationService";
 import { useAuth } from "./AuthContext";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Set up notification handler
 Notifications.setNotificationHandler({
@@ -62,8 +63,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Get push notification token
-      const token = await Notifications.getDevicePushTokenAsync();
+      const token = await Notifications.getExpoPushTokenAsync({
+        projectId: "56fd0421-9f1c-42d7-835a-92cf85f9f8f9", // Your Expo project ID from app.json
+      });
+      
       setNotificationToken(token.data);
+      await AsyncStorage.setItem("fcmToken", token.data);
 
       // Register token with backend if user is authenticated
       if (user && token.data) {

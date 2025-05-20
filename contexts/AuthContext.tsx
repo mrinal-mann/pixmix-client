@@ -1,16 +1,23 @@
 // contexts/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext } from "react";
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
-import {
-  GoogleSignin,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getCloudRunToken } from "../services/authService";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import Constants from "expo-constants";
+
+// Mock Firebase Auth types for development with Expo Go
+type FirebaseUser = {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  getIdToken: (forceRefresh?: boolean) => Promise<string>;
+};
 
 // Define the context
 type AuthContextType = {
-  user: FirebaseAuthTypes.User | null;
+  user: FirebaseUser | null;
   isLoading: boolean;
   cloudRunToken: string | null;
   signInWithGoogle: () => Promise<void>;
@@ -29,53 +36,117 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+// Ensure WebBrowser redirects work correctly
+WebBrowser.maybeCompleteAuthSession();
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cloudRunToken, setCloudRunToken] = useState<string | null>(null);
 
-  // Configure Google Sign-In when component mounts
-  useEffect(() => {
-    // For Android, we only need the webClientId
-    GoogleSignin.configure({
-      // This is the key from your google-services.json file
-      webClientId:
-        "493914627855-kdi0f5kpehgj10amals7k0ote4nh4idb.apps.googleusercontent.com",
-      // Remove androidClientId as it's not needed and causing issues
-    });
-  }, []);
+  // Get client IDs from app.json
+  const webClientId =
+    Constants.expoConfig?.extra?.webClientId ||
+    "493914627855-kdi0f5kpehgj10amals7k0ote4nh4idb.apps.googleusercontent.com";
+  const androidClientId =
+    Constants.expoConfig?.extra?.androidClientId ||
+    "493914627855-fmh1tvmgu2ng7m4c6uivhmjj1pn6uja3.apps.googleusercontent.com";
 
-  // Auth state listener
-  useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(async (userObj) => {
-      setUser(userObj);
+  // Set up Google Auth
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId,
+    webClientId,
+    scopes: ["profile", "email"],
+  });
 
-      if (userObj) {
-        try {
-          await refreshCloudRunToken();
-        } catch (error) {
-          console.error("Error getting Cloud Run token:", error);
+  // Handle auth response
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { authentication } = response;
+      handleGoogleSignInForExpo(authentication?.accessToken);
+    }
+  }, [response]);
+
+  // Check for existing user session
+  useEffect(() => {
+    const loadStoredUser = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem("user");
+        const storedToken = await AsyncStorage.getItem("cloudRunToken");
+
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+          setCloudRunToken(storedToken);
         }
-      } else {
-        setCloudRunToken(null);
-        await AsyncStorage.removeItem("cloudRunToken");
+      } catch (error) {
+        console.error("Error loading stored user:", error);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setIsLoading(false);
-    });
-
-    return unsubscribe;
+    loadStoredUser();
   }, []);
+
+  // Handle Google Sign-in with user info (for Expo Go)
+  const handleGoogleSignInForExpo = async (accessToken: string | undefined) => {
+    if (!accessToken) return;
+
+    try {
+      // Get user info from Google
+      const response = await fetch(
+        "https://www.googleapis.com/userinfo/v2/me",
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      const userInfo = await response.json();
+
+      // Create a mock Firebase user
+      const mockUser: FirebaseUser = {
+        uid: userInfo.id,
+        displayName: userInfo.name,
+        email: userInfo.email,
+        photoURL: userInfo.picture,
+        getIdToken: async () => accessToken, // Use access token as ID token for simplicity
+      };
+
+      // Store user in state and AsyncStorage
+      setUser(mockUser);
+      await AsyncStorage.setItem("user", JSON.stringify(mockUser));
+
+      // Get Cloud Run token
+      const token = await getCloudRunToken(accessToken);
+      setCloudRunToken(token);
+      await AsyncStorage.setItem("cloudRunToken", token);
+    } catch (error) {
+      console.error("Error handling Google sign-in:", error);
+      throw error;
+    }
+  };
+
+  // Sign in with Google function for Expo Go
+  const signInWithGoogle = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      await promptAsync();
+    } catch (error) {
+      console.error("Error signing in with Google:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Refresh Cloud Run token
   const refreshCloudRunToken = async () => {
     try {
-      const currentUser = auth().currentUser;
-      if (!currentUser) return;
+      if (!user) return undefined;
 
-      const idToken = await currentUser.getIdToken(true);
+      const idToken = await user.getIdToken(true);
       const token = await getCloudRunToken(idToken);
 
       setCloudRunToken(token);
@@ -88,55 +159,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Sign in with Google - fixed to use proper Promise<void> return type
-  const signInWithGoogle = async (): Promise<void> => {
-    try {
-      setIsLoading(true);
-
-      // Check if your device supports Google Play
-      await GoogleSignin.hasPlayServices();
-
-      // Get user data
-      const googleUser = await GoogleSignin.signIn();
-
-      // The type definitions don't match the actual response structure
-      // Using type assertion to access the idToken
-      const idToken = (googleUser as any).idToken;
-
-      if (!idToken) {
-        throw new Error("Failed to get ID token from Google Sign-In");
-      }
-
-      // Create a Google credential with the token
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-
-      // Sign-in the user with the credential
-      await auth().signInWithCredential(googleCredential);
-    } catch (error: any) {
-      console.error("Error signing in with Google:", error);
-
-      // Handle specific sign-in errors
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("Sign in was cancelled");
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log("Sign in is already in progress");
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log("Play services not available");
-      } else {
-        console.log("Other sign in error", error);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Sign out
   const signOut = async (): Promise<void> => {
     try {
-      await GoogleSignin.signOut();
-      await auth().signOut();
-      setCloudRunToken(null);
+      // Clear local storage
+      await AsyncStorage.removeItem("user");
       await AsyncStorage.removeItem("cloudRunToken");
+
+      // Reset state
+      setUser(null);
+      setCloudRunToken(null);
     } catch (error) {
       console.error("Error signing out:", error);
     }

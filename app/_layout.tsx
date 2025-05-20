@@ -1,5 +1,5 @@
+import React, { useEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { NotificationProvider } from "../contexts/NotificationContext";
@@ -18,10 +18,10 @@ function AuthRedirect() {
 
     if (!user && !isInAuthGroup) {
       // If not authenticated and not on an auth screen, redirect to auth
-      router.replace("/(auth)/index" as any);
+      router.replace("/(auth)/login" as any);
     } else if (user && isInAuthGroup) {
       // If authenticated and on an auth screen, redirect to main app
-      router.replace("/(tabs)/index" as any);
+      router.replace("/(tabs)/home" as any);
     }
   }, [user, isLoading, segments, router]);
 
