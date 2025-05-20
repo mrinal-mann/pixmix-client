@@ -1,6 +1,13 @@
 // screens/AuthScreen.tsx
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function AuthScreen() {
@@ -9,11 +16,7 @@ export default function AuthScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image
-          source={require("../assets/images/logo.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Image style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>PixMix</Text>
         <Text style={styles.subtitle}>Transform your photos with AI</Text>
       </View>
@@ -24,10 +27,7 @@ export default function AuthScreen() {
         disabled={isLoading}
       >
         <View style={styles.buttonContent}>
-          <Image
-            source={require("../assets/images/google-logo.png")}
-            style={styles.googleIcon}
-          />
+          <Image style={styles.googleIcon} />
           <Text style={styles.signInText}>
             {isLoading ? "Signing in..." : "Sign in with Google"}
           </Text>
@@ -69,10 +69,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }),
     elevation: 3,
   },
   buttonContent: {

@@ -8,6 +8,7 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
@@ -221,10 +222,14 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     width: 100,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.1)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+        }),
     elevation: 2,
   },
   selectedFilterItem: {

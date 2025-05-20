@@ -1,13 +1,10 @@
 // services/imageService.ts
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
-import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNotification } from '../contexts/NotificationContext';
 
 // API URLs
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 
-  'https://pixmix-backend-xxx.run.app';
+const BACKEND_URL = "http://localhost:3000";
 
 /**
  * Apply a filter to an image

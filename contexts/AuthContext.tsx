@@ -1,20 +1,13 @@
 // contexts/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext } from "react";
 import * as Google from "expo-auth-session/providers/google";
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
+import auth from "@react-native-firebase/auth";
 import { getCloudRunToken } from "../services/authService";
-import { firebaseConfig } from "../lib/firebase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Initialize Firebase if not already initialized
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
 
 // Define the shape of the context
 type AuthContextType = {
-  user: firebase.User | null;
+  user: any | null;
   isLoading: boolean;
   cloudRunToken: string | null;
   signInWithGoogle: () => Promise<void>;
@@ -39,7 +32,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<firebase.User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cloudRunToken, setCloudRunToken] = useState<string | null>(null);
 
@@ -59,10 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (response?.type === "success") {
       const { id_token } = response.params;
 
-      const credential = firebase.auth.GoogleAuthProvider.credential(id_token);
-      firebase
-        .auth()
-        .signInWithCredential(credential)
+      const googleCredential = auth.GoogleAuthProvider.credential(id_token);
+      auth()
+        .signInWithCredential(googleCredential)
         .catch((error) => {
           console.error("Firebase auth error:", error);
         });
@@ -71,10 +63,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Listen for authentication state changes
   useEffect(() => {
-    const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
-      setUser(user);
+    const unsubscribe = auth().onAuthStateChanged(async (userObj) => {
+      setUser(userObj);
 
-      if (user) {
+      if (userObj) {
         // User is signed in, get Cloud Run token
         try {
           await refreshCloudRunToken();
@@ -97,9 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Function to refresh Cloud Run token
   const refreshCloudRunToken = async () => {
     try {
-      if (!firebase.auth().currentUser) return;
+      const currentUser = auth().currentUser;
+      if (!currentUser) return;
 
-      const idToken = await firebase.auth().currentUser!.getIdToken(true);
+      const idToken = await currentUser.getIdToken(true);
       const token = await getCloudRunToken(idToken);
 
       setCloudRunToken(token);
@@ -121,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Sign out
   const signOut = async () => {
     try {
-      await firebase.auth().signOut();
+      await auth().signOut();
       setCloudRunToken(null);
       await AsyncStorage.removeItem("cloudRunToken");
     } catch (error) {

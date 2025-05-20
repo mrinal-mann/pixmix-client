@@ -1,10 +1,8 @@
 // services/authService.ts
 import axios from 'axios';
-import Constants from 'expo-constants';
 
 // API URLs
-const AUTH_SERVICE_URL = Constants.expoConfig?.extra?.authServiceUrl || 
-  'https://gcloud-authentication-xxx.run.app';
+const AUTH_SERVICE_URL = "http://localhost:4000";
 
 /**
  * Exchanges a Firebase ID token for a Cloud Run token

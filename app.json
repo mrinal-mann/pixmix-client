@@ -39,7 +39,6 @@
       "@react-native-firebase/app",
       "@react-native-firebase/messaging",
       "@react-native-firebase/auth",
-      "@react-native-firebase/storage",
       "expo-web-browser"
     ],
     "experiments": {
