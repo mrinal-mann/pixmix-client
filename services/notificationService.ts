@@ -1,13 +1,10 @@
 // services/notificationService.ts
 import axios from "axios";
-import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 
 // API URLs
-const BACKEND_URL =
-  Constants.expoConfig?.extra?.backendUrl ||
-  "https://pixmix-backend-xxx.run.app";
+const BACKEND_URL = "http://localhost:3000";
 
 /**
  * Register FCM device token with backend

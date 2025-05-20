@@ -27,7 +27,7 @@ export default function LoginScreen() {
       
       <View style={styles.logoContainer}>
         <Image 
-          source={require('../../assets/images/logo.png')} 
+          source={require('../../assets/images/icon.png')} 
           style={styles.logo} 
           resizeMode="contain" 
         />
@@ -42,7 +42,7 @@ export default function LoginScreen() {
       >
         <View style={styles.buttonContent}>
           <Image 
-            source={require('../../assets/images/google-icon.png')} 
+            source={require('../../assets/images/icon.png')} 
             style={styles.googleIcon} 
             resizeMode="contain"
           />

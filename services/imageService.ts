@@ -3,8 +3,9 @@ import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// API URLs
-const BACKEND_URL = "http://localhost:3000";
+// API URLs - Use the development URLs when running locally
+// In a production app, you would use environment variables or build configs
+const BACKEND_URL = "http://localhost:3000"; // Replace with your actual deployed URL
 
 /**
  * Apply a filter to an image
@@ -50,6 +51,8 @@ export const applyFilter = async (imageUri: string, filter: string) => {
       formData.append('fcmToken', fcmToken);
     }
 
+    console.log(`Sending request to ${BACKEND_URL}/generate with filter: ${filter}`);
+
     // Send request to backend
     const response = await axios.post(`${BACKEND_URL}/generate`, formData, {
       headers: {
@@ -60,7 +63,7 @@ export const applyFilter = async (imageUri: string, filter: string) => {
 
     return response.data;
   } catch (error) {
-    console.error('Error applying filter:', error);
+    console.error("Error applying filter:", error);
     throw error;
   }
 };

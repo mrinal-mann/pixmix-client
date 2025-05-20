@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,49 +7,49 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Platform,
   StatusBar,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../contexts/NotificationContext';
-import { applyFilter } from '../../services/imageService';
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../contexts/AuthContext";
+import { applyFilter } from "../../services/imageService";
 
 // Available filter types with icons and descriptions
 const filters = [
-  { 
-    id: "Ghibli", 
-    name: "Ghibli", 
-    icon: "🏯", 
-    description: "Dreamlike, whimsical style inspired by Studio Ghibli animations"
+  {
+    id: "Ghibli",
+    name: "Ghibli",
+    icon: "🏯",
+    description:
+      "Dreamlike, whimsical style inspired by Studio Ghibli animations",
   },
-  { 
-    id: "Pixar", 
-    name: "Pixar", 
-    icon: "🧸", 
-    description: "3D animated style with Pixar's signature lighting and textures"
+  {
+    id: "Pixar",
+    name: "Pixar",
+    icon: "🧸",
+    description:
+      "3D animated style with Pixar's signature lighting and textures",
   },
-  { 
-    id: "Sketch", 
-    name: "Sketch", 
-    icon: "✏️", 
-    description: "Hand-drawn artistic pencil sketch with fine details"
+  {
+    id: "Sketch",
+    name: "Sketch",
+    icon: "✏️",
+    description: "Hand-drawn artistic pencil sketch with fine details",
   },
-  { 
-    id: "Cyberpunk", 
-    name: "Cyberpunk", 
-    icon: "🌆", 
-    description: "Futuristic dystopian style with neon lights and tech elements"
+  {
+    id: "Cyberpunk",
+    name: "Cyberpunk",
+    icon: "🌆",
+    description:
+      "Futuristic dystopian style with neon lights and tech elements",
   },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { notificationToken } = useNotification();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -84,7 +84,7 @@ export default function HomeScreen() {
 
       // Navigate to result screen with the processed image URL
       router.push({
-        pathname: '/result',
+        pathname: "/result",
         params: {
           imageUrl: response.imageUrl,
           filterName: selectedFilter,
@@ -99,13 +99,13 @@ export default function HomeScreen() {
   };
 
   const getFilterDescription = (filterId: string) => {
-    return filters.find(filter => filter.id === filterId)?.description || "";
+    return filters.find((filter) => filter.id === filterId)?.description || "";
   };
 
   return (
-    <SafeAreaView edges={['top']} style={styles.container}>
+    <SafeAreaView edges={["top"]} style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-      
+
       {/* Header with user info */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
@@ -125,14 +125,17 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Image placeholder or selected image */}
         <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
           {selectedImage ? (
-            <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
+            <Image
+              source={{ uri: selectedImage }}
+              style={styles.selectedImage}
+            />
           ) : (
             <View style={styles.imagePlaceholder}>
               <Ionicons name="image-outline" size={48} color="#888" />

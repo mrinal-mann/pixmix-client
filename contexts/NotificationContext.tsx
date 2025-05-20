@@ -8,10 +8,9 @@ import React, {
 } from "react";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
 import { registerFCMToken } from "../services/notificationService";
 import { useAuth } from "./AuthContext";
+import { useRouter } from "expo-router";
 
 // Set up notification handler
 Notifications.setNotificationHandler({
@@ -23,12 +22,6 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
-
-type RootStackParamList = {
-  Result: { imageUrl: string; filterName: string };
-};
-
-type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 type NotificationContextType = {
   notificationToken: string | null;
@@ -49,7 +42,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     null
   );
   const { user } = useAuth();
-  const navigation = useNavigation<NavigationProp>();
+  const router = useRouter();
 
   const registerForPushNotifications = useCallback(async () => {
     try {
@@ -113,9 +106,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
           if (data.notificationType === "image_ready") {
             // Navigate to result screen with processed image data
-            navigation.navigate("Result", {
-              imageUrl: data.imageUrl,
-              filterName: data.filterType,
+            router.push({
+              pathname: '/result',
+              params: {
+                imageUrl: data.imageUrl,
+                filterName: data.filterType,
+              },
             });
           }
         });
@@ -126,7 +122,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
         notificationResponseSubscription.remove();
       };
     }
-  }, [user, navigation, registerForPushNotifications]);
+  }, [user, router, registerForPushNotifications]);
 
   const value = {
     notificationToken,

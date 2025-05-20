@@ -1,8 +1,8 @@
 // services/authService.ts
 import axios from 'axios';
 
-// API URLs
-const AUTH_SERVICE_URL = "http://localhost:4000";
+// API URLs - Use the development URLs when running locally
+const AUTH_SERVICE_URL = "http://localhost:4000"; // Replace with your actual deployed URL
 
 /**
  * Exchanges a Firebase ID token for a Cloud Run token
@@ -12,6 +12,8 @@ const AUTH_SERVICE_URL = "http://localhost:4000";
  */
 export const getCloudRunToken = async (firebaseToken: string): Promise<string> => {
   try {
+    console.log(`Requesting Cloud Run token from ${AUTH_SERVICE_URL}/auth/public-token`);
+    
     const response = await axios.post(
       `${AUTH_SERVICE_URL}/auth/public-token`, 
       {},
