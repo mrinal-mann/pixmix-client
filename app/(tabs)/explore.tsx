@@ -1,110 +1,184 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+  StatusBar,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+// Component for expandable info section
+const InfoSection = ({ title, children }: { title: string; children: React.ReactNode }) => {
+  const [expanded, setExpanded] = React.useState(false);
 
-export default function TabTwoScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <View style={styles.infoSection}>
+      <TouchableOpacity 
+        style={styles.infoHeader}
+        onPress={() => setExpanded(!expanded)}
+      >
+        <Text style={styles.infoTitle}>{title}</Text>
+        <Ionicons 
+          name={expanded ? 'chevron-up' : 'chevron-down'} 
+          size={20} 
+          color="#0a7ea4" 
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+      </TouchableOpacity>
+      
+      {expanded && (
+        <View style={styles.infoContent}>
+          {children}
+        </View>
+      )}
+    </View>
+  );
+};
+
+export default function ExploreScreen() {
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
+      
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Explore</Text>
+      </View>
+      
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Text style={styles.welcomeText}>
+          Welcome to PixMix! Discover how our AI-powered image filters can transform your photos into amazing artwork.
+        </Text>
+        
+        <InfoSection title="How It Works">
+          <Text style={styles.infoText}>
+            1. Take or select a photo from your gallery{'\n'}
+            2. Choose from our curated selection of AI styles{'\n'}
+            3. Tap &apos;Apply Filter&apos; to process your image{'\n'}
+            4. Receive a notification when your transformed image is ready{'\n'}
+            5. Save or share your creation
+          </Text>
+        </InfoSection>
+        
+        <InfoSection title="Our AI Filters">
+          <Text style={styles.infoText}>
+            <Text style={styles.bold}>Ghibli:</Text> Transform your photos with the magical, whimsical style of Studio Ghibli animations.{'\n\n'}
+            
+            <Text style={styles.bold}>Pixar:</Text> Give your images the polished 3D look of Pixar animations with vibrant colors and depth.{'\n\n'}
+            
+            <Text style={styles.bold}>Sketch:</Text> Convert photos into detailed pencil sketches with artistic shading and fine line work.{'\n\n'}
+            
+            <Text style={styles.bold}>Cyberpunk:</Text> Add a futuristic dystopian vibe with neon lights and high-tech elements.
+          </Text>
+        </InfoSection>
+        
+        <InfoSection title="Technology">
+          <Text style={styles.infoText}>
+            PixMix uses cutting-edge AI technology powered by OpenAI to transform your images. Each filter is carefully crafted to create stunning results while preserving the essence of your original photo.{'\n\n'}
+            
+            Our secure cloud processing ensures your images are handled with care, and we use Firebase for authentication and notifications.
+          </Text>
+        </InfoSection>
+        
+        <InfoSection title="Tips for Best Results">
+          <Text style={styles.infoText}>
+            • Use high-quality images with good lighting{'\n'}
+            • For portraits, ensure faces are clearly visible{'\n'}
+            • Landscape photos work particularly well with Ghibli and Cyberpunk filters{'\n'}
+            • For detailed artwork, try the Sketch filter{'\n'}
+            • Characters and objects work great with the Pixar filter
+          </Text>
+        </InfoSection>
+        
+        <TouchableOpacity 
+          style={styles.feedbackButton}
+          onPress={() => Linking.openURL('mailto:feedback@pixmix.com')}
+        >
+          <Text style={styles.feedbackButtonText}>Send Feedback</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  titleContainer: {
+  header: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaeaea',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#0a7ea4',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100, // Extra padding for tab bar
+  },
+  welcomeText: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 20,
+    color: '#444',
+  },
+  infoSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  infoHeader: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  infoContent: {
+    padding: 16,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#555',
+  },
+  bold: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  feedbackButton: {
+    backgroundColor: '#0a7ea4',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 40,
+  },
+  feedbackButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
