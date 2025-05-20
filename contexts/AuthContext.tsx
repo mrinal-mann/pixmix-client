@@ -1,13 +1,16 @@
 // contexts/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext } from "react";
-import * as Google from "expo-auth-session/providers/google";
-import auth from "@react-native-firebase/auth";
-import { getCloudRunToken } from "../services/authService";
+import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getCloudRunToken } from "../services/authService";
 
-// Define the shape of the context
+// Define the context
 type AuthContextType = {
-  user: any | null;
+  user: FirebaseAuthTypes.User | null;
   isLoading: boolean;
   cloudRunToken: string | null;
   signInWithGoogle: () => Promise<void>;
@@ -15,7 +18,6 @@ type AuthContextType = {
   refreshCloudRunToken: () => Promise<string | undefined>;
 };
 
-// Create the context with a default value
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
@@ -25,56 +27,38 @@ const AuthContext = createContext<AuthContextType>({
   refreshCloudRunToken: async () => undefined,
 });
 
-// Custom hook to use the auth context
 export const useAuth = () => useContext(AuthContext);
 
-// Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cloudRunToken, setCloudRunToken] = useState<string | null>(null);
 
-  // Set up Google OAuth
-  const [, response, promptAsync] = Google.useAuthRequest({
-    clientId:
-      "493914627855-kdi0f5kpehgj10amals7k0ote4nh4idb.apps.googleusercontent.com", // Web client ID
-    androidClientId:
-      "493914627855-fmh1tvmgu2ng7m4c6uivhmjj1pn6uja3.apps.googleusercontent.com", // Android client ID
-    // iosClientId: "YOUR_IOS_CLIENT_ID", // You'll need to get this from Firebase iOS app settings
-    webClientId:
-      "493914627855-kdi0f5kpehgj10amals7k0ote4nh4idb.apps.googleusercontent.com", // Same as web client ID
-  });
-
-  // Handle Google Auth response
+  // Configure Google Sign-In when component mounts
   useEffect(() => {
-    if (response?.type === "success") {
-      const { id_token } = response.params;
+    // For Android, we only need the webClientId
+    GoogleSignin.configure({
+      // This is the key from your google-services.json file
+      webClientId:
+        "493914627855-kdi0f5kpehgj10amals7k0ote4nh4idb.apps.googleusercontent.com",
+      // Remove androidClientId as it's not needed and causing issues
+    });
+  }, []);
 
-      const googleCredential = auth.GoogleAuthProvider.credential(id_token);
-      auth()
-        .signInWithCredential(googleCredential)
-        .catch((error) => {
-          console.error("Firebase auth error:", error);
-        });
-    }
-  }, [response]);
-
-  // Listen for authentication state changes
+  // Auth state listener
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (userObj) => {
       setUser(userObj);
 
       if (userObj) {
-        // User is signed in, get Cloud Run token
         try {
           await refreshCloudRunToken();
         } catch (error) {
           console.error("Error getting Cloud Run token:", error);
         }
       } else {
-        // User is signed out
         setCloudRunToken(null);
         await AsyncStorage.removeItem("cloudRunToken");
       }
@@ -82,11 +66,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsLoading(false);
     });
 
-    // Cleanup subscription
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
-  // Function to refresh Cloud Run token
+  // Refresh Cloud Run token
   const refreshCloudRunToken = async () => {
     try {
       const currentUser = auth().currentUser;
@@ -105,15 +88,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Sign in with Google
-  const signInWithGoogle = async () => {
-    setIsLoading(true);
-    await promptAsync();
+  // Sign in with Google - fixed to use proper Promise<void> return type
+  const signInWithGoogle = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+
+      // Check if your device supports Google Play
+      await GoogleSignin.hasPlayServices();
+
+      // Get user data
+      const googleUser = await GoogleSignin.signIn();
+
+      // The type definitions don't match the actual response structure
+      // Using type assertion to access the idToken
+      const idToken = (googleUser as any).idToken;
+
+      if (!idToken) {
+        throw new Error("Failed to get ID token from Google Sign-In");
+      }
+
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+      // Sign-in the user with the credential
+      await auth().signInWithCredential(googleCredential);
+    } catch (error: any) {
+      console.error("Error signing in with Google:", error);
+
+      // Handle specific sign-in errors
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("Sign in was cancelled");
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log("Sign in is already in progress");
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log("Play services not available");
+      } else {
+        console.log("Other sign in error", error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Sign out
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     try {
+      await GoogleSignin.signOut();
       await auth().signOut();
       setCloudRunToken(null);
       await AsyncStorage.removeItem("cloudRunToken");
@@ -122,14 +142,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const value = {
-    user,
-    isLoading,
-    cloudRunToken,
-    signInWithGoogle,
-    signOut,
-    refreshCloudRunToken,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        cloudRunToken,
+        signInWithGoogle,
+        signOut,
+        refreshCloudRunToken,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

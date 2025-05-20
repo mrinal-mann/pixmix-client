@@ -1,4 +1,4 @@
-// App.tsx
+// app/App.tsx
 import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { NotificationProvider } from "../contexts/NotificationContext";
 import * as SplashScreen from "expo-splash-screen";
+import { requestUserPermission, getFCMToken, setupFCMListeners } from "../lib/firebase";
 
 // Keep the splash screen visible until authentication check completes
 SplashScreen.preventAutoHideAsync();
@@ -23,6 +24,13 @@ function AppNavigator() {
   useEffect(() => {
     async function prepare() {
       try {
+        // Set up Firebase messaging
+        const hasPermission = await requestUserPermission();
+        if (hasPermission) {
+          await getFCMToken();
+          setupFCMListeners();
+        }
+        
         // Wait for auth to initialize
         if (!isLoading) {
           // Hide splash screen

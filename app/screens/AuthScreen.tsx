@@ -1,4 +1,3 @@
-// screens/AuthScreen.tsx
 import React from "react";
 import {
   View,
@@ -6,12 +5,19 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function AuthScreen() {
   const { signInWithGoogle, isLoading } = useAuth();
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Sign in error:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -23,7 +29,7 @@ export default function AuthScreen() {
 
       <TouchableOpacity
         style={styles.signInButton}
-        onPress={signInWithGoogle}
+        onPress={handleSignIn}
         disabled={isLoading}
       >
         <View style={styles.buttonContent}>
@@ -37,6 +43,7 @@ export default function AuthScreen() {
   );
 }
 
+// Keep your existing styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -69,14 +76,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     alignItems: "center",
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)" }
-      : {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        }),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
   buttonContent: {

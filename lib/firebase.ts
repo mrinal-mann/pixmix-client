@@ -1,13 +1,45 @@
-// Firebase configuration for React Native Firebase
-export const firebaseConfig = {
-  apiKey: "AIzaSyBp_JPcbkcyX38Cyo-XK2dNcsX-AJ7jLSI",
-  authDomain: "pixmix-6a12e.firebaseapp.com",
-  projectId: "pixmix-6a12e",
-  storageBucket: "pixmix-6a12e.appspot.com",
-  messagingSenderId: "493914627855",
-  appId: "1:493914627855:web:be09720daf7ca91c26687a",
+import messaging from '@react-native-firebase/messaging';
+import { Platform } from 'react-native';
+
+// Request user permission for notifications
+export const requestUserPermission = async () => {
+  if (Platform.OS === 'android') {
+    // Android permissions are handled in manifest
+    return true;
+  }
+  
+  const authStatus = await messaging().requestPermission();
+  const enabled =
+    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  
+  return enabled;
 };
 
-// Note: You don't need to explicitly initialize React Native Firebase
-// as it's done automatically when you import @react-native-firebase/app
-// This file is mainly kept for configuration reference
+// Get FCM token
+export const getFCMToken = async () => {
+  try {
+    const token = await messaging().getToken();
+    console.log('FCM Token:', token);
+    return token;
+  } catch (error) {
+    console.error('Failed to get FCM token:', error);
+    return null;
+  }
+};
+
+// Set up FCM listeners
+export const setupFCMListeners = () => {
+  // Handle background messages
+  messaging().setBackgroundMessageHandler(async remoteMessage => {
+    console.log('Message handled in the background:', remoteMessage);
+  });
+
+  // Handle foreground messages
+  const unsubscribe = messaging().onMessage(async remoteMessage => {
+    console.log('Foreground Message received:', remoteMessage);
+    // You can add your notification handling logic here
+  });
+
+  return unsubscribe;
+};

@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Share,
   Alert,
-  Platform,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import * as FileSystem from "expo-file-system";
@@ -154,14 +153,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#fff",
     marginBottom: 20,
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0px 1px 3px rgba(0, 0, 0, 0.2)" }
-      : {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.2,
-          shadowRadius: 3,
-        }),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
     elevation: 3,
   },
   image: {
