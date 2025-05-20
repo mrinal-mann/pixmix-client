@@ -37,12 +37,18 @@
         }
       ],
       "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      "@react-native-firebase/messaging",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/storage",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
+      "clientId": "493914627855-kdi0f5kpehgj10amals7k0ote4nh4idb.apps.googleusercontent.com",
+      "androidClientId": "493914627855-fmh1tvmgu2ng7m4c6uivhmjj1pn6uja3.apps.googleusercontent.com",
+      "webClientId": "493914627855-kdi0f5kpehgj10amals7k0ote4nh4idb.apps.googleusercontent.com",
       "router": {},
       "eas": {
         "projectId": "56fd0421-9f1c-42d7-835a-92cf85f9f8f9"
